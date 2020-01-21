@@ -21,18 +21,23 @@ def batch_callback(callback_list, lookup_dict):
 def execute_callback(callback):
     """Bottom-part of generic parallel processing of Callback objects.
     """
-    return callback._func(*callback._args, **callback._kwargs)
+    return callback()
 
 class Callback(object):
     """Specific data structure for dynamically organized callbacks.
     """
-    def __init__(self, func, args, kwargs, serial=False):
-        self._serial = serial
+    def __init__(self, func, args, kwargs, prereq=[]):
+        """
+        :param func: the function to call.
+        :param args: arguments to be passed to the function, which can be callbacks themselves.
+        :param kwargs: keyword arguments to be passed.
+        :param prereq: other callbacks that are not args but must finish before this callback can run.
+        """
+        self._uuid = uuid.uuid1()
         self._func = func
         self._kwargs = kwargs
-        self._uuid = uuid.uuid1()
         self._args = list()
-        self._prereq = dict()
+        self._prereq = {_callback._uuid : -1 for _callback in prereq}
         for i, _arg in enumerate(args):
             if isinstance(_arg, Callback):
                 self._prereq[_arg._uuid] = i
@@ -41,11 +46,30 @@ class Callback(object):
                 self._args.append(_arg)
 
     def ready(self, lookup_dict):
-        """Update arguments by looking up a dictionary.
+        """Update arguments and check other prerequisites by looking up a dictionary, then clear prerequisites.
+        :param lookup_dict: {uuid : value} mapping.
         """
         for _uuid in self._prereq.keys():
-            _idx = self._prereq.pop(_uuid)
-            self._args[_idx] = lookup_dict[_uuid]
+            _idx = self._prereq[_uuid]
+            _value = lookup_dict[_uuid]
+            if _idx >= 0:
+                self._args[_idx] = _value
+        self._prereq = dict()
+
+    def __call__(self):
+        """Run this callback.
+        To run in parallel with deco, use a function instead of a method.
+        """
+        assert not self._prereq
+        return self._func(*self._args, **self._kwargs)
+
+    @staticmethod
+    def wrap(func):
+        """Wraps a function so that instead of returning retval, it delays execution and returns a callback.
+        """
+        def lazy_func(*args, **kwargs):
+            return Callback(func, args, kwargs)
+        return lazy_func
 
 class CallbackQueue(object):
     """Makes callbacks using a queue.
@@ -84,7 +108,8 @@ class CallbackQueue(object):
                         _independent = False
                 if _independent:
                     callback_list.append(_callback)
-                    self.lobby.pop(_uuid)
+            for _callback in callback_list:
+                self.lobby.pop(_callback._uuid)
             return callback_list
 
         while bool(self.lobby):
