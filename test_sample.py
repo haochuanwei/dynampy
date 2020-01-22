@@ -16,9 +16,21 @@ def foo(a, b, add=True):
 
 foo_callback = Callback.wrap(foo)
 
+class Bar:
+    def __init__(self):
+        self.value = 0
+
+    def add(self, a, b):
+        return a + b
+
+bar_callback = Callback.wrap(Bar().add)
+
 def test_callback_functionality():
     assert foo(1, 2) == 3
     assert foo_callback(2, 1, add=False)() == 1
+
+def test_method_callback():
+    assert bar_callback(1, 2)() == 3
 
 def test_callback_session_functionality():
     session = CallbackSession()
@@ -64,3 +76,4 @@ def test_serial_callback():
     assert len(session.lookup) == i_dim
     assert 0.4950 - 1e-8 <= session.lookup[callback_sum._uuid] < 0.4950 + 1e-8
     assert single_run * i_dim < serial_run < 1.5 * single_run * i_dim
+
