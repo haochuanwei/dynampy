@@ -71,7 +71,7 @@ class Callback(object):
             return Callback(func, args, kwargs)
         return lazy_func
 
-class CallbackQueue(object):
+class CallbackSession(object):
     """Makes callbacks using a queue.
     """
     def __init__(self):

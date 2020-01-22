@@ -1,4 +1,4 @@
-from callback import Callback, CallbackQueue
+from callback import Callback, CallbackSession
 import time
 
 def running_time(callback):
@@ -26,7 +26,7 @@ def test_parallel_callback():
     tic = time.time()
     i_dim, j_dim = 20, 20
     assert i_dim * j_dim > 2
-    queue = CallbackQueue()
+    queue = CallbackSession()
     for i in range(i_dim):
         for j in range(j_dim):
             queue.add(foo_callback(i, j))
@@ -42,7 +42,7 @@ def test_serial_callback():
 
     tic = time.time()
     i_dim = 100
-    queue = CallbackQueue()
+    queue = CallbackSession()
     callback_sum = 0.0
     for i in range(i_dim):
         increment = i * 0.0001
