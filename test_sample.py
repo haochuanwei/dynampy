@@ -26,15 +26,15 @@ def test_parallel_callback():
     tic = time.time()
     i_dim, j_dim = 20, 20
     assert i_dim * j_dim > 2
-    queue = CallbackSession()
+    session = CallbackSession()
     for i in range(i_dim):
         for j in range(j_dim):
-            queue.add(foo_callback(i, j))
-    queue.compile()
-    queue.run()
+            session.add(foo_callback(i, j))
+    session.compile()
+    session.run()
     toc = time.time()
     parallel_run = toc - tic
-    assert len(queue.lookup) == i_dim * j_dim
+    assert len(session.lookup) == i_dim * j_dim
     assert parallel_run < single_run * i_dim * j_dim
 
 def test_serial_callback():
@@ -42,16 +42,16 @@ def test_serial_callback():
 
     tic = time.time()
     i_dim = 100
-    queue = CallbackSession()
+    session = CallbackSession()
     callback_sum = 0.0
     for i in range(i_dim):
         increment = i * 0.0001
         callback_sum = foo_callback(callback_sum, increment)
-        queue.add(callback_sum)
-    queue.compile()
-    queue.run()
+        session.add(callback_sum)
+    session.compile()
+    session.run()
     toc = time.time()
     serial_run = toc - tic
-    assert len(queue.lookup) == i_dim
-    assert 0.4950 - 1e-8 <= queue.lookup[callback_sum._uuid] < 0.4950 + 1e-8
+    assert len(session.lookup) == i_dim
+    assert 0.4950 - 1e-8 <= session.lookup[callback_sum._uuid] < 0.4950 + 1e-8
     assert single_run * i_dim < serial_run < 1.5 * single_run * i_dim

@@ -1,5 +1,5 @@
 """
-Use callbacks to dynamically organize and parallelize your whole program.
+Use callbacks to dynamically organize and parallelize your program.
 """
 from functools import wraps
 from queue import Queue
