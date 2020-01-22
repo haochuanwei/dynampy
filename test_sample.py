@@ -20,6 +20,15 @@ def test_callback_functionality():
     assert foo(1, 2) == 3
     assert foo_callback(2, 1, add=False)() == 1
 
+def test_callback_session_functionality():
+    session = CallbackSession()
+    foo_sess = session.wrap(foo)
+    callback = foo_sess(1, 2)
+    session.compile()
+    session.run()
+    assert len(session.lookup) == 1
+    assert session.lookup[callback._uuid] == 3
+
 def test_parallel_callback():
     single_run = running_time(foo_callback(1, 1))
 

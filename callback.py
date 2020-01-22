@@ -4,7 +4,6 @@ Use callbacks to dynamically organize and parallelize your program.
 from functools import wraps
 from queue import Queue
 import uuid
-import wasabi
 import deco
 
 @deco.synchronized
@@ -75,10 +74,18 @@ class CallbackSession(object):
     """Makes callbacks using a queue.
     """
     def __init__(self):
-        self.logger = wasabi.Printer()
         self.queue = Queue()
         self.lobby = dict()
         self.lookup = dict()
+
+    def wrap(self, func):
+        """Wraps a function so that instead of returning retval, it delays execution and returns a callback. Also puts the callback in the lobby automatically.
+        """
+        def lazy_func(*args, **kwargs):
+            callback = Callback(func, args, kwargs)
+            self.add(callback)
+            return callback
+        return lazy_func
 
     def run(self):
         while not self.queue.empty():
