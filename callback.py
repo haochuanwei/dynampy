@@ -5,6 +5,7 @@ from functools import wraps
 from queue import Queue
 import uuid
 import deco
+import wasabi
 
 @deco.synchronized
 def batch_callback(callback_list, lookup_dict):
@@ -74,9 +75,19 @@ class CallbackSession(object):
     """Makes callbacks using a queue.
     """
     def __init__(self):
+        self.logger = wasabi.Printer()
         self.queue = Queue()
         self.lobby = dict()
         self.lookup = dict()
+
+    def run(self):
+        self.build_queue()
+        self.serve_queue()
+
+    def add(self, callback):
+        """Add a callback without putting it into the queue.
+        """
+        self.lobby[callback._uuid] = callback
 
     def wrap(self, func):
         """Wraps a function so that instead of returning retval, it delays execution and returns a callback. Also puts the callback in the lobby automatically.
@@ -87,21 +98,10 @@ class CallbackSession(object):
             return callback
         return lazy_func
 
-    def run(self):
-        while not self.queue.empty():
-            _callback_list = self.queue.get()
-            _retval_dict = batch_callback(_callback_list, self.lookup)
-            self.lookup.update(_retval_dict)
-
-    def add(self, callback):
-        """Add a callback without putting it into the queue.
-        """
-        self.lobby[callback._uuid] = callback
-
-    def compile(self):
+    def build_queue(self):
         """Identify dependent and/or parallelizable callbacks and group them.
         """
-        assert self.queue.empty(), "Please call run() to clear the queue first."
+        assert self.queue.empty(), "Please call serve_queue() to clear the queue first."
 
         sent_to_queue = set()
         def sweep_for_independent():
@@ -124,3 +124,12 @@ class CallbackSession(object):
             assert callback_list, f"Expected at least one callback to be independent"
             self.queue.put(callback_list)
             sent_to_queue.update([_callback._uuid for _callback in callback_list])
+
+    def serve_queue(self, verbose=True):
+        if verbose:
+            self.logger.divider(f"Serving queued callbacks")
+        while not self.queue.empty():
+            _callback_list = self.queue.get()
+            _retval_dict = batch_callback(_callback_list, self.lookup)
+            self.logger.good(f"Finished {len(_callback_list)} callbacks", show=verbose)
+            self.lookup.update(_retval_dict)
