@@ -1,4 +1,4 @@
-from callback import Callback, CallbackSession
+from dynampy import Callback, CallbackSession
 import time
 
 def running_time(callback):

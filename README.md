@@ -1,2 +1,2 @@
 # dynampy
-Dynamic callbacks
+Stands for **"dynamically organized Python program"**.
