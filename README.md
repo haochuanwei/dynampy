@@ -1,5 +1,5 @@
 # Dynampy
-Stands for **"dynamically organized Python program"**. In other words, specify what is *about to be computed*, store them as **callbacks**, and organize such callbacks in an efficient manner that does not require low-level modification of your code.
+Stands for **"dynamically organized Python program"**. In other words, specify what is *about to be computed*, store them as `Callback`s, and organize such callbacks in an efficient manner that does not require low-level modification of your code.
 
 # Functionality
 
